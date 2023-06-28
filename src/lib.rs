@@ -54,9 +54,15 @@ impl Grid {
     }
 
     pub fn update(&mut self) {
-        for (i, row) in self.cells.iter().enumerate() {
-            for (j, cell) in row.iter().enumerate() {}
+        let current_grid_state = &self.cells;
+        let mut new_grid_state = current_grid_state.clone();
+        for (i, row) in current_grid_state.iter().enumerate() {
+            for (j, cell) in row.iter().enumerate() {
+                let living_neighbors = cell.living_neighbors(self);
+                new_grid_state[i][j].state = apply_rules(&cell.state, living_neighbors);
+            }
         }
+        self.cells = new_grid_state;
     }
 
     fn cell_at_mouse_position(&self, x: f32, y: f32) -> Option<(usize, usize)> {
@@ -83,8 +89,11 @@ pub struct Cell {
 }
 
 impl Cell {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Cell { state: State::Dead }
+    }
+    fn living_neighbors(&self, grid: &Grid) -> usize {
+        3
     }
 }
 
@@ -92,6 +101,25 @@ impl Cell {
 enum State {
     Dead,
     Alive,
+}
+
+fn apply_rules(state: &State, living_neighbors: usize) -> State {
+    match state {
+        State::Alive => {
+            if living_neighbors == 2 || living_neighbors == 3 {
+                State::Alive
+            } else {
+                State::Dead
+            }
+        }
+        State::Dead => {
+            if living_neighbors == 3 {
+                State::Alive
+            } else {
+                State::Dead
+            }
+        }
+    }
 }
 
 pub fn input_handler(grid: &mut Grid) {
@@ -102,5 +130,8 @@ pub fn input_handler(grid: &mut Grid) {
             grid.toggle_cell(i, j);
             println!("TOGGLED at {} {}", i, j);
         }
+    }
+    if input::is_key_pressed(macroquad::prelude::KeyCode::Space) {
+        grid.update();
     }
 }
