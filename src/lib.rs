@@ -58,7 +58,7 @@ impl Grid {
         let mut new_grid_state = current_grid_state.clone();
         for (i, row) in current_grid_state.iter().enumerate() {
             for (j, cell) in row.iter().enumerate() {
-                let living_neighbors = cell.living_neighbors(self);
+                let living_neighbors = cell.living_neighbors(j, i, self);
                 new_grid_state[i][j].state = apply_rules(&cell.state, living_neighbors);
             }
         }
@@ -92,8 +92,28 @@ impl Cell {
     fn new() -> Self {
         Cell { state: State::Dead }
     }
-    fn living_neighbors(&self, grid: &Grid) -> usize {
-        3
+    fn living_neighbors(&self, cell_x: usize, cell_y: usize, grid: &Grid) -> usize {
+        let mut count = 0;
+        for colMod in (-1 as isize)..=1 {
+            for rowMod in (-1 as isize)..=1 {
+                let neighbor_x = cell_x as isize + colMod;
+                let neighbor_y = cell_y as isize + rowMod;
+                if neighbor_x < 0
+                    || neighbor_y < 0
+                    || neighbor_x >= grid.width as isize
+                    || neighbor_y >= grid.height as isize
+                    || (colMod == 0 && rowMod == 0)
+                {
+                    continue;
+                } else {
+                    match grid.cells[neighbor_y as usize][neighbor_x as usize].state {
+                        State::Alive => count += 1,
+                        State::Dead => (),
+                    }
+                }
+            }
+        }
+        count
     }
 }
 
